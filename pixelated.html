@@ -153,12 +153,6 @@
 
 		draw() {
 			// Draw
-			fill(this.mouthOpen ? 'white' : 'cyan')
-			// noStroke()
-			// ellipse(a[0] / 4, a[1] / 4, 5)
-			// const b = p.annotations.lipsUpperInner[5]
-			// ellipse(b[0] / 4, b[1] / 4, 5)
-
 			for (const particle of this.mouthParticles) {
 				particle.draw()
 			}
@@ -194,23 +188,25 @@
 		capture.size(640, 480);
 		capture.hide();
 
-
-		(async () => {
-			const model = await faceLandmarksDetection.load(faceLandmarksDetection.SupportedPackages
-				.mediapipeFacemesh, {
-					maxFaces: 4,
-					shouldLoadIrisModel: false
-				});
-
-			setInterval(async () => {
-				predictions = await model.estimateFaces({
-					input: capture.elt,
-					predictIrises: false
-				});
-			}, 32)
-		})()
-
+		setupFaceDetection()
 	}
+
+
+	async function setupFaceDetection() {
+		const model = await faceLandmarksDetection.load(faceLandmarksDetection.SupportedPackages
+			.mediapipeFacemesh, {
+				maxFaces: 4,
+				shouldLoadIrisModel: false
+			});
+
+		setInterval(async () => {
+			predictions = await model.estimateFaces({
+				input: capture.elt,
+				predictIrises: false
+			});
+		}, 32)
+	}
+
 
 	function draw() {
 		background(255);
