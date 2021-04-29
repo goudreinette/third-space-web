@@ -26,7 +26,6 @@ class SceneStart {
     }
 
     update() {
-        update
         for (const g of grabbers) {
             if (g.mouthOpen) {
                 scene = new SceneToilet()
@@ -95,7 +94,7 @@ class SceneToilet {
             image(images.toilet, grabbers[1].x - 24, grabbers[1].y - 20, 50, 50)
         }
 
-
+        drawScore()
         // Bottom
         // image(images.butt, grabbers[0].x - 24, grabbers[0].y - 20, 50, 50)
     }
@@ -377,6 +376,18 @@ function drawCameraPixelated() {
     image(capture, 0, 0, WIDTH, HEIGHT);
     filter(THRESHOLD)
     noStroke()
+}
+
+function drawScore() {
+    resetMatrix(); // reset
+
+    textSize(8)
+    fill('red')
+    text(`score: ${score}`, WIDTH / 2, 10)
+
+    translate(WIDTH, 0);
+    scale(-1, 1);
+
 }
 
 
