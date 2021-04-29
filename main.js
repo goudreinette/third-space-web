@@ -263,17 +263,17 @@ let grabbers = [
 ]
 
 
-let objectsToGrab = [{
-    x: 50,
-    y: 50,
-    r: 10
-},
-{
-    x: 30,
-    y: 30,
-    r: 10
-}
-
+let objectsToGrab = [
+    {
+        x: 50,
+        y: 50,
+        r: 10
+    },
+    {
+        x: 30,
+        y: 30,
+        r: 10
+    }
 ]
 
 
