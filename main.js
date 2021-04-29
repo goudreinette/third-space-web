@@ -5,6 +5,17 @@ let score = 0
 const WIDTH = 160
 const HEIGHT = 120
 
+let images = {}
+let pressStart
+
+function preload() {
+    images.butt = loadImage('./img/butt.png')
+    images.cook = loadImage('./img/cook.png')
+    images.toilet = loadImage('./img/toliet.png')
+    images.poop = loadImage('./img/poop.png')
+    pressStart = loadFont('./fonts/prstart.ttf')
+}
+
 
 /**
  * Do different things depending on the game/scene
@@ -15,10 +26,10 @@ class SceneStart {
     }
 
     update() {
-        // update
+        update
         for (const g of grabbers) {
             if (g.mouthOpen) {
-                scene = new SceneDelivery()
+                scene = new SceneToilet()
             }
         }
 
@@ -33,7 +44,7 @@ class SceneStart {
         textSize(12)
 
         text("THIRD SPACE", WIDTH / 2, HEIGHT / 2)
-        textSize(5)
+        textSize(4)
 
         if (frameCount / 8 % 8 < 4)
             text("open mouth to play", WIDTH / 2, HEIGHT / 2 + 10)
@@ -45,12 +56,48 @@ class SceneStart {
 }
 
 class SceneToilet {
+    shits = []
+
     onEnter() {
 
     }
 
     update() {
+        drawCameraPixelated()
 
+        // Draw/update all shits
+        for (const s of this.shits) {
+            s.y += 1
+
+            if (s.y > HEIGHT) {
+                this.shits = this.shits.filter(ss => ss != s)
+            }
+
+            image(images.poop, s.x, s.y, 20, 20)
+        }
+
+        // Top 
+        if (grabbers[0]) {
+            let buttX = grabbers[0].x - 24
+            let buttY = grabbers[0].y - 20
+
+            image(images.butt, buttX, buttY, 50, 50)
+
+            if (grabbers[0].mouthOpen & frameCount % 5 == 0) {
+                this.shits.push({
+                    x: grabbers[0].x - 10,
+                    y: grabbers[0].y
+                })
+            }
+        }
+
+        if (grabbers[1]) {
+            image(images.toilet, grabbers[1].x - 24, grabbers[1].y - 20, 50, 50)
+        }
+
+
+        // Bottom
+        // image(images.butt, grabbers[0].x - 24, grabbers[0].y - 20, 50, 50)
     }
 }
 
@@ -96,9 +143,6 @@ class SceneFinished {
 
         text("FINISHED", WIDTH / 2, HEIGHT / 2)
         textSize(5)
-
-        // if (frameCount / 8 % 8 < 4)
-        //     text("open mouth to play", WIDTH / 2, HEIGHT / 2 + 10)
 
         // and back
         translate(WIDTH, 0);
@@ -249,6 +293,7 @@ class Grabber {
         for (const particle of this.mouthParticles) {
             particle.draw()
         }
+
     }
 }
 
@@ -293,6 +338,8 @@ function setup() {
     capture.hide();
 
     setupFaceDetection()
+
+    textFont(pressStart)
 }
 
 
