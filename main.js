@@ -8,12 +8,18 @@ const HEIGHT = 120
 let images = {}
 let pressStart
 
+let lightColor = 'rgb(217, 165, 179)'
+let darkColor = 'rgb(198, 215, 235)'
+
+
+
 function preload() {
     images.butt = loadImage('./img/butt.png')
     images.cook = loadImage('./img/cook.png')
     images.toilet = loadImage('./img/toliet.png')
     images.poop = loadImage('./img/poop.png')
     pressStart = loadFont('./fonts/prstart.ttf')
+
 }
 
 
@@ -72,7 +78,12 @@ class SceneToilet {
                 this.shits = this.shits.filter(ss => ss != s)
             }
 
-            image(images.poop, s.x, s.y, 20, 20)
+            if (distance(s.x, s.y, grabbers[1].x, grabbers[1].y) < s.r) {
+                score++
+                this.shits = this.shits.filter(ss => ss != s)
+            }
+
+            image(images.poop, s.x, s.y, s.r, s.r)
         }
 
         // Top 
@@ -85,7 +96,8 @@ class SceneToilet {
             if (grabbers[0].mouthOpen & frameCount % 5 == 0) {
                 this.shits.push({
                     x: grabbers[0].x - 10,
-                    y: grabbers[0].y
+                    y: grabbers[0].y,
+                    r: 20
                 })
             }
         }
@@ -121,6 +133,12 @@ class SceneDelivery {
             d.update()
             d.draw()
         }
+
+        // Draw hat
+        if (predictions[0]) {
+            const [x, y, z] = predictions[0].annotations.midwayBetweenEyes[0]
+            image(images.poop, x, y, 40, 40)
+        }
     }
 }
 
@@ -150,7 +168,7 @@ class SceneFinished {
 }
 
 
-let scene = new SceneStart()
+let scene = new SceneDelivery()
 
 
 class MouthParticle {
@@ -336,7 +354,10 @@ function setup() {
     capture.size(640, 480);
     capture.hide();
 
+
+
     setupFaceDetection()
+
 
     textFont(pressStart)
 }
@@ -359,6 +380,11 @@ async function setupFaceDetection() {
 
 
 function updateFaces() {
+    // Sort predictions // FIXME
+    predictions.sort((a, b) => {
+        return a.boundingBox.topLeft[1] - b.boundingBox.topLeft[1]
+    })
+
     for (let i = 0; i < predictions.length; i++) {
         const prediction = predictions[i];
         const grabber = grabbers[i];
@@ -367,7 +393,12 @@ function updateFaces() {
 }
 
 
+
+
 function drawCameraPixelated() {
+    background(lightColor)
+    // blendMode(MULTIPLY);
+
     /**
      * Always draw this stuff
      */
@@ -375,7 +406,6 @@ function drawCameraPixelated() {
     scale(-1, 1);
     image(capture, 0, 0, WIDTH, HEIGHT);
     filter(THRESHOLD)
-    noStroke()
 }
 
 function drawScore() {
@@ -383,7 +413,7 @@ function drawScore() {
 
     textSize(8)
     fill('red')
-    text(`score: ${score}`, WIDTH / 2, 10)
+    text(`${score}`, WIDTH - grabbers[1].x, grabbers[1].y)
 
     translate(WIDTH, 0);
     scale(-1, 1);
