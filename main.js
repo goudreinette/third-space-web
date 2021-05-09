@@ -350,6 +350,8 @@ let dropZones = [
  */
 function setup() {
     createCanvas(WIDTH, HEIGHT);
+
+    // Init video
     capture = createCapture(VIDEO);
     capture.size(640, 480);
     capture.hide();
