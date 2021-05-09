@@ -168,7 +168,7 @@ class SceneFinished {
 }
 
 
-let scene = new SceneDelivery()
+let scene = new SceneToilet()
 
 
 class MouthParticle {
@@ -352,8 +352,10 @@ function setup() {
     createCanvas(WIDTH, HEIGHT);
 
     // Init video
-    capture = createCapture(VIDEO);
-    capture.size(640, 480);
+    capture = createVideo(['vid2.mp4']);
+    capture.loop()
+    // capture = createCapture(VIDEO);
+    // capture.size(640, 480);
     capture.hide();
 
 

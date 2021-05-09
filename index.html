@@ -8,6 +8,8 @@
 </head>
 
 
+<div class="background"></div>
+
 <style>
 	body {
 		margin: 0;
@@ -22,5 +24,15 @@
 		width: 100vw !important;
 		height: unset !important;
 		image-rendering: pixelated;
+		mix-blend-mode: screen;
+
+	}
+
+	.background {
+		width: 100vw;
+		height: 100vh;
+		position: fixed;
+		background-color: hsl(331deg 15% 48%);
+		z-index: -1;
 	}
 </style>
