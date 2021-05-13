@@ -1,9 +1,14 @@
 let capture;
 let predictions = []
+let model
+let stream
+
 let score = 0
 
-const WIDTH = 640
-const HEIGHT = 360
+const WIDTH = 320
+const HEIGHT = 180
+const MIDDLE_Y = HEIGHT / 2
+const MIDDLE_X = WIDTH / 2
 
 let cameraGraphics
 let cameraShader
@@ -38,7 +43,7 @@ class SceneStart {
     }
 
     update() {
-        for (const g of grabbers) {
+        for (const g of players) {
             if (g.mouthOpen) {
                 scene = new SceneDelivery()
             }
@@ -83,7 +88,7 @@ class SceneToilet {
                 this.shits = this.shits.filter(ss => ss != s)
             }
 
-            if (distance(s.x, s.y, grabbers[1].x, grabbers[1].y) < s.r) {
+            if (distance(s.x, s.y, players[1].x, players[1].y) < s.r) {
                 score++
                 this.shits = this.shits.filter(ss => ss != s)
             }
@@ -92,28 +97,28 @@ class SceneToilet {
         }
 
         // Top 
-        if (grabbers[0]) {
-            let buttX = grabbers[0].x - 24
-            let buttY = grabbers[0].y - 20
+        if (players[0].present) {
+            let buttX = players[0].x - 24
+            let buttY = players[0].y - 20
 
             image(images.butt, buttX, buttY, 50, 50)
 
-            if (grabbers[0].mouthOpen & frameCount % 5 == 0) {
+            if (players[0].mouthOpen & frameCount % 5 == 0) {
                 this.shits.push({
-                    x: grabbers[0].x - 10,
-                    y: grabbers[0].y,
+                    x: players[0].x - 10,
+                    y: players[0].y,
                     r: 20
                 })
             }
         }
 
-        if (grabbers[1]) {
-            image(images.toilet, grabbers[1].x - 24, grabbers[1].y - 20, 50, 50)
+        if (players[1].present) {
+            image(images.toilet, players[1].x - 24, players[1].y - 20, 50, 50)
         }
 
         drawScore()
         // Bottom
-        // image(images.butt, grabbers[0].x - 24, grabbers[0].y - 20, 50, 50)
+        // image(images.butt, players[0].x - 24, players[0].y - 20, 50, 50)
     }
 }
 
@@ -125,7 +130,7 @@ class SceneDelivery {
     update() {
         drawCameraPixelated()
 
-        for (const g of grabbers) {
+        for (const g of players) {
             g.draw()
         }
 
@@ -173,16 +178,16 @@ class SceneFinished {
 }
 
 
-let scene = new SceneDelivery()
+let scene = new SceneToilet()
 
 
 class MouthParticle {
     r = 0
 
-    constructor(x, y, grabber) {
+    constructor(x, y, player) {
         this.x = x
         this.y = y
-        this.grabber = grabber
+        this.player = player
     }
 
     update() {
@@ -238,6 +243,7 @@ class Player {
     justOpened = false
     justClosed = false
     mouthParticles = []
+    present = true
 
     update(prediction) {
         const {
@@ -248,10 +254,9 @@ class Player {
         // Calculate positions
         const lipsLowerInnerCoords = lipsLowerInner[5]
         const lipsUpperInnerCoords = lipsUpperInner[5]
-        const lowerLipsY = lipsLowerInnerCoords[1] / 2
-        const upperLipsY = lipsUpperInnerCoords[1] / 2
-
-        const mouthX = this.x = lipsLowerInnerCoords[0] / 2
+        const lowerLipsY = lipsLowerInnerCoords[1]
+        const upperLipsY = lipsUpperInnerCoords[1]
+        const mouthX = this.x = lipsLowerInnerCoords[0]
         const mouthY = this.y = (lowerLipsY + upperLipsY) / 2
         const mouthZ = lipsLowerInnerCoords[2] / 2
 
@@ -319,7 +324,7 @@ class Player {
     }
 }
 
-let grabbers = [
+let players = [
     new Player(),
     new Player(),
     new Player(),
@@ -352,13 +357,14 @@ let dropZones = [
  */
 function setup() {
     createCanvas(WIDTH, HEIGHT);
+    // pixelDensity(1)
 
     // Init video
-    // capture = createVideo(['vid2.mp4']);
+    // capture = createVideo(['Untitled Project 2.mov']);
     // capture.loop()
+    // video.size(WIDTH, HEIGHT)
 
     capture = createCapture(VIDEO);
-    capture.size(WIDTH, HEIGHT);
 
     capture.hide();
 
@@ -373,32 +379,98 @@ function setup() {
 
 
 async function setupFaceDetection() {
-    const model = await faceLandmarksDetection.load(faceLandmarksDetection.SupportedPackages
+    model = await faceLandmarksDetection.load(faceLandmarksDetection.SupportedPackages
         .mediapipeFacemesh, {
         maxFaces: 4,
         shouldLoadIrisModel: false
     });
 
-    setInterval(async () => {
-        predictions = await model.estimateFaces({
-            input: capture.elt,
-            predictIrises: false
-        });
-    }, 32)
+    setInterval(updateFaces, 32)
 }
 
 
-function updateFaces() {
-    // Sort predictions // FIXME
-    predictions.sort((a, b) => {
+async function updateFaces() {
+    predictions = await model.estimateFaces({
+        input: capture.elt,
+        predictIrises: false
+    });
+
+    predictions = predictions.sort((a, b) => {
         return a.boundingBox.topLeft[1] - b.boundingBox.topLeft[1]
     })
 
-    for (let i = 0; i < predictions.length; i++) {
-        const prediction = predictions[i];
-        const grabber = grabbers[i];
-        grabber.update(prediction)
+    // if (predictions.length == 2) {
+    //     let prediction0 = predictions.find(p => (p.boundingBox.topLeft[1] + p.boundingBox.bottomRight[1]) / 2 < MIDDLE_Y)
+    //     let prediction1 = predictions.find(p => (p.boundingBox.topLeft[1] + p.boundingBox.bottomRight[1]) / 2 > MIDDLE_Y)
+
+    //     if (prediction0) {
+    //         players[0].present = true
+    //         players[0].update(prediction0)
+    //     } else {
+    //         players[0].present = false
+    //     }
+
+    //     if (prediction1) {
+    //         players[1].present = true
+    //         players[1].update(prediction1)
+    //     } else {
+    //         players[1].present = false
+    //     }
+    // }
+
+    if (predictions.length == 4) {
+        let prediction0 = predictions.find(p =>
+            (p.boundingBox.topLeft[0] + p.boundingBox.bottomRight[0]) / 2 < MIDDLE_X &&
+            (p.boundingBox.topLeft[1] + p.boundingBox.bottomRight[1]) / 2 < MIDDLE_Y)
+
+        let prediction1 = predictions.find(p =>
+            (p.boundingBox.topLeft[0] + p.boundingBox.bottomRight[0]) / 2 > MIDDLE_X &&
+            (p.boundingBox.topLeft[1] + p.boundingBox.bottomRight[1]) / 2 < MIDDLE_Y)
+
+        let prediction2 = predictions.find(p =>
+            (p.boundingBox.topLeft[0] + p.boundingBox.bottomRight[0]) / 2 < MIDDLE_X &&
+            (p.boundingBox.topLeft[1] + p.boundingBox.bottomRight[1]) / 2 > MIDDLE_Y)
+
+        let prediction3 = predictions.find(p =>
+            (p.boundingBox.topLeft[0] + p.boundingBox.bottomRight[0]) / 2 > MIDDLE_X &&
+            (p.boundingBox.topLeft[1] + p.boundingBox.bottomRight[1]) / 2 > MIDDLE_Y)
+
+        if (prediction0) {
+            players[0].present = true
+            players[0].update(prediction0)
+        } else {
+            players[0].present = false
+        }
+
+        if (prediction1) {
+            players[1].present = true
+            players[1].update(prediction1)
+        } else {
+            players[1].present = false
+        }
+
+        if (prediction2) {
+            players[2].present = true
+            players[2].update(prediction0)
+        } else {
+            players[2].present = false
+        }
+
+        if (prediction3) {
+            players[3].present = true
+            players[3].update(prediction1)
+        } else {
+            players[3].present = false
+        }
     }
+
+
+
+    // for (let i = 0; i < predictions.length; i++) {
+    //     const prediction = predictions[i];
+    //     const player = players[i];
+
+    // }
 }
 
 
@@ -407,12 +479,7 @@ function updateFaces() {
 function drawCameraPixelated() {
     background('white')
     cameraGraphics.shader(cameraShader)
-
     cameraShader.setUniform('tex0', capture);
-
-    // also send the mouseX value but convert it to a number between 0 and 1
-    // cameraShader.setUniform('mouseX', mouseX / width);
-    // cameraGraphics.
     cameraGraphics.rect(-WIDTH / 2, -HEIGHT / 2, WIDTH, HEIGHT);
 
     scale(-1, 1);
@@ -428,9 +495,30 @@ function drawScore() {
 
     textSize(8)
     fill('red')
-    text(`${score}`, WIDTH - grabbers[1].x, grabbers[1].y)
+    text(`${score}`, WIDTH - players[1].x, players[1].y)
 
     resetMatrix()
+
+}
+
+
+function drawFaceDebug() {
+    stroke('red')
+    noFill()
+    strokeWeight(1)
+    line(0, HEIGHT / 2, WIDTH, HEIGHT / 2)
+    line(MIDDLE_X, 0, MIDDLE_X, HEIGHT)
+
+    console.log(predictions.length)
+    for (const p of predictions) {
+        const { topLeft, bottomRight } = p.boundingBox
+        const faceMiddleY = (topLeft[1] + bottomRight[1]) / 2
+        const faceMiddleX = (topLeft[0] + bottomRight[0]) / 2
+
+        rect(topLeft[0], topLeft[1], bottomRight[0] - topLeft[0], bottomRight[1] - topLeft[1])
+        line(topLeft[0], faceMiddleY, bottomRight[0], faceMiddleY)
+        line(faceMiddleX, topLeft[1], faceMiddleX, bottomRight[1])
+    }
 
 }
 
@@ -439,12 +527,15 @@ function draw() {
     /**
     * Always track the faces
     */
-    updateFaces()
+    // updateFaces()
+
 
     /**
      * Do different things depending on the scene
      */
     scene.update()
+
+    drawFaceDebug()
 }
 
 
