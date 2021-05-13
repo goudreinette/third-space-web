@@ -2,8 +2,11 @@ let capture;
 let predictions = []
 let score = 0
 
-const WIDTH = 160
-const HEIGHT = 120
+const WIDTH = 640
+const HEIGHT = 360
+
+let cameraGraphics
+let cameraShader
 
 let images = {}
 let pressStart
@@ -20,6 +23,8 @@ function preload() {
     images.poop = loadImage('./img/poop.png')
     pressStart = loadFont('./fonts/prstart.ttf')
 
+    cameraGraphics = createGraphics(WIDTH, HEIGHT, WEBGL);
+    cameraShader = loadShader('shaders/basic.vert', 'shaders/colorize.frag');
 }
 
 
@@ -34,7 +39,7 @@ class SceneStart {
     update() {
         for (const g of grabbers) {
             if (g.mouthOpen) {
-                scene = new SceneToilet()
+                scene = new SceneDelivery()
             }
         }
 
@@ -44,7 +49,6 @@ class SceneStart {
         // transparency
         background('hsla(0,0%,100%, .9)')
         fill('black')
-        resetMatrix(); // reset
         textAlign(CENTER)
         textSize(12)
 
@@ -243,12 +247,12 @@ class Grabber {
         // Calculate positions
         const lipsLowerInnerCoords = lipsLowerInner[5]
         const lipsUpperInnerCoords = lipsUpperInner[5]
-        const lowerLipsY = lipsLowerInnerCoords[1] / 4
-        const upperLipsY = lipsUpperInnerCoords[1] / 4
+        const lowerLipsY = lipsLowerInnerCoords[1] / 2
+        const upperLipsY = lipsUpperInnerCoords[1] / 2
 
-        const mouthX = this.x = lipsLowerInnerCoords[0] / 4
+        const mouthX = this.x = lipsLowerInnerCoords[0] / 2
         const mouthY = this.y = (lowerLipsY + upperLipsY) / 2
-        const mouthZ = lipsLowerInnerCoords[2] / 4
+        const mouthZ = lipsLowerInnerCoords[2] / 2
 
         // Update 
         this.justClosed = false
@@ -352,9 +356,14 @@ function setup() {
     createCanvas(WIDTH, HEIGHT);
 
     // Init video
+    // capture = createVideo(['vid2.mp4']);
+    // capture.loop()
+
     capture = createCapture(VIDEO);
-    capture.size(640, 480);
+    capture.size(WIDTH, HEIGHT);
+
     capture.hide();
+
 
 
 
@@ -398,27 +407,32 @@ function updateFaces() {
 
 
 function drawCameraPixelated() {
-    background(lightColor)
-    // blendMode(MULTIPLY);
+    background('white')
+    cameraGraphics.shader(cameraShader)
 
-    /**
-     * Always draw this stuff
-     */
-    translate(WIDTH, 0);
+    cameraShader.setUniform('tex0', capture);
+
+    // also send the mouseX value but convert it to a number between 0 and 1
+    // cameraShader.setUniform('mouseX', mouseX / width);
+    // cameraGraphics.
+    cameraGraphics.rect(-WIDTH / 2, -HEIGHT / 2, WIDTH, HEIGHT);
+
     scale(-1, 1);
-    image(capture, 0, 0, WIDTH, HEIGHT);
-    filter(THRESHOLD)
+    translate(-WIDTH, 0);
+    image(cameraGraphics, 0, 0, WIDTH, HEIGHT);
+
+    resetMatrix(); // reset
 }
 
 function drawScore() {
-    resetMatrix(); // reset
+    translate(WIDTH, 0);
+    scale(-1, 1);
 
     textSize(8)
     fill('red')
     text(`${score}`, WIDTH - grabbers[1].x, grabbers[1].y)
 
-    translate(WIDTH, 0);
-    scale(-1, 1);
+    resetMatrix()
 
 }
 
