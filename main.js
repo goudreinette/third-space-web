@@ -2,8 +2,8 @@ let capture;
 let predictions = []
 let score = 0
 
-const WIDTH = 160
-const HEIGHT = 120
+const WIDTH = 640
+const HEIGHT = 360
 
 let cameraGraphics
 let cameraShader
@@ -39,7 +39,7 @@ class SceneStart {
     update() {
         for (const g of grabbers) {
             if (g.mouthOpen) {
-                scene = new SceneToilet()
+                scene = new SceneDelivery()
             }
         }
 
@@ -172,7 +172,7 @@ class SceneFinished {
 }
 
 
-let scene = new SceneToilet()
+let scene = new SceneDelivery()
 
 
 class MouthParticle {
@@ -356,9 +356,14 @@ function setup() {
     createCanvas(WIDTH, HEIGHT);
 
     // Init video
-    capture = createVideo(['vid2.mp4']);
-    capture.loop()
+    // capture = createVideo(['vid2.mp4']);
+    // capture.loop()
+
+    capture = createCapture(VIDEO);
+    capture.size(WIDTH, HEIGHT);
+
     capture.hide();
+
 
 
 
