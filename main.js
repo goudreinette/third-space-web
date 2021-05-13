@@ -11,8 +11,9 @@ let cameraShader
 let images = {}
 let pressStart
 
-let lightColor = 'rgb(217, 165, 179)'
-let darkColor = 'rgb(198, 215, 235)'
+
+// let lightColor = 'rgb(217, 165, 179)'
+// let darkColor = 'rgb(198, 215, 235)'
 
 
 
@@ -226,7 +227,7 @@ class DropZone {
 }
 
 
-class Grabber {
+class Player {
     x = 0
     y = 0
 
@@ -319,13 +320,10 @@ class Grabber {
 }
 
 let grabbers = [
-    new Grabber(),
-    new Grabber(),
-    new Grabber(),
-    new Grabber(),
-    new Grabber(),
-    new Grabber(),
-    new Grabber()
+    new Player(),
+    new Player(),
+    new Player(),
+    new Player(),
 ]
 
 
