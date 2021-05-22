@@ -17,11 +17,6 @@ let images = {}
 let pressStart
 
 
-// let lightColor = 'rgb(217, 165, 179)'
-// let darkColor = 'rgb(198, 215, 235)'
-
-
-
 function preload() {
     images.butt = loadImage('./img/butt.png')
     images.cook = loadImage('./img/cook.png')
@@ -37,148 +32,9 @@ function preload() {
 /**
  * Do different things depending on the game/scene
  */
-class SceneStart {
-    onEnter() {
-
-    }
-
-    update() {
-        for (const g of players) {
-            if (g.mouthOpen) {
-                scene = new SceneDelivery()
-            }
-        }
-
-        // draw --
-        drawCameraPixelated()
-
-        // transparency
-        background('hsla(0,0%,100%, .9)')
-        fill('black')
-        textAlign(CENTER)
-        textSize(12)
-
-        text("THIRD SPACE", WIDTH / 2, HEIGHT / 2)
-        textSize(4)
-
-        if (frameCount / 8 % 8 < 4)
-            text("open mouth to play", WIDTH / 2, HEIGHT / 2 + 10)
-
-        // and back
-        translate(WIDTH, 0);
-        scale(-1, 1);
-    }
-}
-
-class SceneToilet {
-    shits = []
-
-    onEnter() {
-
-    }
-
-    update() {
-        drawCameraPixelated()
-
-        // Draw/update all shits
-        for (const s of this.shits) {
-            s.y += 1
-
-            if (s.y > HEIGHT) {
-                this.shits = this.shits.filter(ss => ss != s)
-            }
-
-            if (distance(s.x, s.y, players[1].x, players[1].y) < s.r) {
-                score++
-                this.shits = this.shits.filter(ss => ss != s)
-            }
-
-            image(images.poop, s.x, s.y, s.r, s.r)
-        }
-
-        // Top 
-        if (players[0].present) {
-            let buttX = players[0].x - 24
-            let buttY = players[0].y - 20
-
-            image(images.butt, buttX, buttY, 50, 50)
-
-            if (players[0].mouthOpen & frameCount % 5 == 0) {
-                this.shits.push({
-                    x: players[0].x - 10,
-                    y: players[0].y,
-                    r: 20
-                })
-            }
-        }
-
-        if (players[1].present) {
-            image(images.toilet, players[1].x - 24, players[1].y - 20, 50, 50)
-        }
-
-        drawScore()
-        // Bottom
-        // image(images.butt, players[0].x - 24, players[0].y - 20, 50, 50)
-    }
-}
-
-class SceneDelivery {
-    onEnter() {
-
-    }
-
-    update() {
-        drawCameraPixelated()
-
-        for (const g of players) {
-            g.draw()
-        }
-
-        for (const o of objectsToGrab) {
-            fill('red')
-            ellipse(o.x, o.y, o.r)
-        }
-
-        for (const d of dropZones) {
-            d.update()
-            d.draw()
-        }
-
-        // Draw hat
-        if (predictions[0]) {
-            const [x, y, z] = predictions[0].annotations.midwayBetweenEyes[0]
-            image(images.poop, x, y, 40, 40)
-        }
-    }
-}
-
-class SceneFinished {
-    onEnter() {
-
-    }
-
-    update() {
-        // draw --
-        drawCameraPixelated()
-
-        // transparency
-        background('hsla(0,0%,100%, .9)')
-        fill('black')
-        resetMatrix(); // reset
-        textAlign(CENTER)
-        textSize(12)
-
-        text("FINISHED", WIDTH / 2, HEIGHT / 2)
-        textSize(5)
-
-        // and back
-        translate(WIDTH, 0);
-        scale(-1, 1);
-    }
-}
 
 
-let scene = new SceneToilet()
+let scene = new SceneDelivery()
 
 
 class MouthParticle {
@@ -256,18 +112,25 @@ class Player {
         const lipsUpperInnerCoords = lipsUpperInner[5]
         const lowerLipsY = lipsLowerInnerCoords[1]
         const upperLipsY = lipsUpperInnerCoords[1]
-        const mouthX = this.x = lipsLowerInnerCoords[0]
-        const mouthY = this.y = (lowerLipsY + upperLipsY) / 2
+        this.x = lipsLowerInnerCoords[0]
+        this.y = (lowerLipsY + upperLipsY) / 2 // average of mouth
         const mouthZ = lipsLowerInnerCoords[2] / 2
 
-        // Update 
+
+        /**
+         * Calculating mouth open state
+         */
         this.justClosed = false
         this.justOpened = false
 
-        const difference = lipsLowerInner[5][1] - lipsUpperInner[5][1]
+        const mouthOpenDistance = lipsLowerInner[5][1] - lipsUpperInner[5][1]
 
         let lastMouthOpen = this.mouthOpen
-        this.mouthOpen = difference > 10
+        this.mouthOpen = mouthOpenDistance > 5
+
+        if (this.justReleased) {
+            this.justReleased = null
+        }
 
         if (lastMouthOpen && !this.mouthOpen) {
             this.justClosed = true
@@ -275,52 +138,14 @@ class Player {
         } else if (!lastMouthOpen && this.mouthOpen) {
             this.justOpened = true
             this.justClosed = false
-        }
-
-        let anyInRange = false
-
-        for (const o of objectsToGrab) {
-            if (distance(mouthX, lowerLipsY, o.x, o.y) < o.r / 2) {
-                this.inRange = o
-                anyInRange = true
-
-                if (this.justClosed && this.mouthOpen == false) {
-                    this.dragging = o
-                }
-            }
-
-            if (this.dragging == o) {
-                o.x = lerp(mouthX, o.x, 0.25)
-                o.y = lerp(lowerLipsY, o.y, 0.25)
-            }
-        }
-
-        if (this.mouthOpen) {
-            this.dragging = null
-
-            if (frameCount % 5 == 0) {
-                this.mouthParticles.push(new MouthParticle(mouthX, mouthY))
-            }
-        }
-
-        for (const particle of this.mouthParticles) {
-            particle.update()
-            if (particle.r > 20) {
-                this.mouthParticles = this.mouthParticles.filter(p => p != particle)
-            }
-        }
-
-        if (!anyInRange) {
-            this.inRange = null
+            this.justReleased = this.dragging
         }
     }
 
     draw() {
-        // Draw
         for (const particle of this.mouthParticles) {
             particle.draw()
         }
-
     }
 }
 
@@ -335,7 +160,7 @@ let players = [
 let objectsToGrab = [
     {
         x: 50,
-        y: 50,
+        y: 150,
         r: 10
     },
     {
@@ -367,9 +192,6 @@ function setup() {
     capture = createCapture(VIDEO);
 
     capture.hide();
-
-
-
 
     setupFaceDetection()
 
@@ -418,6 +240,9 @@ async function updateFaces() {
     //     }
     // }
 
+    /**
+     * Figuring out who is who / quarter split
+     */
     if (predictions.length == 4) {
         let prediction0 = predictions.find(p =>
             (p.boundingBox.topLeft[0] + p.boundingBox.bottomRight[0]) / 2 < MIDDLE_X &&
@@ -451,26 +276,18 @@ async function updateFaces() {
 
         if (prediction2) {
             players[2].present = true
-            players[2].update(prediction0)
+            players[2].update(prediction2)
         } else {
             players[2].present = false
         }
 
         if (prediction3) {
             players[3].present = true
-            players[3].update(prediction1)
+            players[3].update(prediction3)
         } else {
             players[3].present = false
         }
     }
-
-
-
-    // for (let i = 0; i < predictions.length; i++) {
-    //     const prediction = predictions[i];
-    //     const player = players[i];
-
-    // }
 }
 
 
@@ -489,6 +306,7 @@ function drawCameraPixelated() {
     resetMatrix(); // reset
 }
 
+
 function drawScore() {
     translate(WIDTH, 0);
     scale(-1, 1);
@@ -498,18 +316,16 @@ function drawScore() {
     text(`${score}`, WIDTH - players[1].x, players[1].y)
 
     resetMatrix()
-
 }
 
 
 function drawFaceDebug() {
-    stroke('red')
+    stroke('rgba(255,0,0,0.2)')
     noFill()
     strokeWeight(1)
     line(0, HEIGHT / 2, WIDTH, HEIGHT / 2)
     line(MIDDLE_X, 0, MIDDLE_X, HEIGHT)
 
-    console.log(predictions.length)
     for (const p of predictions) {
         const { topLeft, bottomRight } = p.boundingBox
         const faceMiddleY = (topLeft[1] + bottomRight[1]) / 2
@@ -519,7 +335,6 @@ function drawFaceDebug() {
         line(topLeft[0], faceMiddleY, bottomRight[0], faceMiddleY)
         line(faceMiddleX, topLeft[1], faceMiddleX, bottomRight[1])
     }
-
 }
 
 
@@ -527,8 +342,6 @@ function draw() {
     /**
     * Always track the faces
     */
-    // updateFaces()
-
 
     /**
      * Do different things depending on the scene
