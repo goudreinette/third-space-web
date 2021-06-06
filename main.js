@@ -2,6 +2,7 @@ let capture;
 let predictions = []
 let model
 let stream
+let params = new URLSearchParams(location.search)
 
 let score = 0
 
@@ -20,8 +21,12 @@ let pressStart
 function preload() {
     images.butt = loadImage('./img/butt.png')
     images.cook = loadImage('./img/cook.png')
+    images.customer = loadImage('./img/customer.png')
+    images.coin = loadImage('./img/coin.png')
+    images.hand = loadImage('./img/hand.png')
     images.toilet = loadImage('./img/toliet.png')
     images.poop = loadImage('./img/poop.png')
+    images.pizza = loadImage('./img/pizza.png')
     pressStart = loadFont('./fonts/prstart.ttf')
 
     cameraGraphics = createGraphics(WIDTH, HEIGHT, WEBGL);
@@ -32,9 +37,20 @@ function preload() {
 /**
  * Do different things depending on the game/scene
  */
+let scene
 
+if (!params.has('scene')) {
+    scene = new SceneStart()
+}
 
-let scene = new SceneDelivery()
+if (params.get('scene') == "toilet") {
+    scene = new SceneToilet()
+}
+
+if (params.get('scene') == "delivery") {
+    scene = new SceneDelivery()
+} 
+ 
 
 
 class MouthParticle {
@@ -92,6 +108,9 @@ class Player {
     x = 0
     y = 0
 
+    foreheadX = 0
+    foreheadY = 0
+
     mouthOpen = false // boolean
     dragging = null // A SceneObject
     inRange = null // A SceneObject
@@ -116,6 +135,15 @@ class Player {
         this.y = (lowerLipsY + upperLipsY) / 2 // average of mouth
         const mouthZ = lipsLowerInnerCoords[2] / 2
 
+        
+        
+        this.foreheadX = (prediction.boundingBox.topLeft[0] + prediction.boundingBox.bottomRight[0])/2
+        this.foreheadY =  prediction.boundingBox.topLeft[1]
+
+
+        this.chinX = (prediction.boundingBox.topLeft[0] + prediction.boundingBox.bottomRight[0])/2
+        this.chinY =  prediction.boundingBox.bottomRight[1]
+
 
         /**
          * Calculating mouth open state
@@ -126,7 +154,7 @@ class Player {
         const mouthOpenDistance = lipsLowerInner[5][1] - lipsUpperInner[5][1]
 
         let lastMouthOpen = this.mouthOpen
-        this.mouthOpen = mouthOpenDistance > 5
+        this.mouthOpen = mouthOpenDistance > 2
 
         if (this.justReleased) {
             this.justReleased = null
@@ -152,27 +180,15 @@ class Player {
 let players = [
     new Player(),
     new Player(),
-    new Player(),
-    new Player(),
 ]
 
 
 let objectsToGrab = [
-    {
-        x: 50,
-        y: 150,
-        r: 10
-    },
-    {
-        x: 30,
-        y: 30,
-        r: 10
-    }
 ]
 
 
 let dropZones = [
-    new DropZone(80, 80, 10)
+    // new DropZone(80, 80, 10)
 ]
 
 
@@ -197,13 +213,29 @@ function setup() {
 
 
     textFont(pressStart)
+
+
+    objectsToGrab = [
+        {
+            x: MIDDLE_X + 30,
+            y: 90,
+            r: 30,
+            image: images.coin
+        },
+        {
+            x: 30,
+            y: 90,
+            r: 30,
+            image: images.pizza
+        }
+    ]
 }
 
 
 async function setupFaceDetection() {
     model = await faceLandmarksDetection.load(faceLandmarksDetection.SupportedPackages
         .mediapipeFacemesh, {
-        maxFaces: 4,
+        maxFaces: 2,
         shouldLoadIrisModel: false
     });
 
@@ -221,44 +253,11 @@ async function updateFaces() {
         return a.boundingBox.topLeft[1] - b.boundingBox.topLeft[1]
     })
 
-    // if (predictions.length == 2) {
-    //     let prediction0 = predictions.find(p => (p.boundingBox.topLeft[1] + p.boundingBox.bottomRight[1]) / 2 < MIDDLE_Y)
-    //     let prediction1 = predictions.find(p => (p.boundingBox.topLeft[1] + p.boundingBox.bottomRight[1]) / 2 > MIDDLE_Y)
-
-    //     if (prediction0) {
-    //         players[0].present = true
-    //         players[0].update(prediction0)
-    //     } else {
-    //         players[0].present = false
-    //     }
-
-    //     if (prediction1) {
-    //         players[1].present = true
-    //         players[1].update(prediction1)
-    //     } else {
-    //         players[1].present = false
-    //     }
-    // }
-
-    /**
-     * Figuring out who is who / quarter split
-     */
-    if (predictions.length == 4) {
-        let prediction0 = predictions.find(p =>
-            (p.boundingBox.topLeft[0] + p.boundingBox.bottomRight[0]) / 2 < MIDDLE_X &&
-            (p.boundingBox.topLeft[1] + p.boundingBox.bottomRight[1]) / 2 < MIDDLE_Y)
-
-        let prediction1 = predictions.find(p =>
-            (p.boundingBox.topLeft[0] + p.boundingBox.bottomRight[0]) / 2 > MIDDLE_X &&
-            (p.boundingBox.topLeft[1] + p.boundingBox.bottomRight[1]) / 2 < MIDDLE_Y)
-
-        let prediction2 = predictions.find(p =>
-            (p.boundingBox.topLeft[0] + p.boundingBox.bottomRight[0]) / 2 < MIDDLE_X &&
-            (p.boundingBox.topLeft[1] + p.boundingBox.bottomRight[1]) / 2 > MIDDLE_Y)
-
-        let prediction3 = predictions.find(p =>
-            (p.boundingBox.topLeft[0] + p.boundingBox.bottomRight[0]) / 2 > MIDDLE_X &&
-            (p.boundingBox.topLeft[1] + p.boundingBox.bottomRight[1]) / 2 > MIDDLE_Y)
+    if (predictions.length == 2) {
+        // let prediction0 = predictions.find(p => (p.boundingBox.topLeft[1] + p.boundingBox.bottomRight[1]) / 2 < MIDDLE_Y)
+        // let prediction1 = predictions.find(p => (p.boundingBox.topLeft[1] + p.boundingBox.bottomRight[1]) / 2 > MIDDLE_Y)
+        let prediction0 = predictions.find(p => (p.boundingBox.topLeft[0] + p.boundingBox.bottomRight[0]) / 2 < MIDDLE_X)
+        let prediction1 = predictions.find(p => (p.boundingBox.topLeft[0] + p.boundingBox.bottomRight[0]) / 2 > MIDDLE_X)
 
         if (prediction0) {
             players[0].present = true
@@ -273,21 +272,56 @@ async function updateFaces() {
         } else {
             players[1].present = false
         }
-
-        if (prediction2) {
-            players[2].present = true
-            players[2].update(prediction2)
-        } else {
-            players[2].present = false
-        }
-
-        if (prediction3) {
-            players[3].present = true
-            players[3].update(prediction3)
-        } else {
-            players[3].present = false
-        }
     }
+
+    /**
+     * Figuring out who is who / quarter split
+     */
+    // if (predictions.length == 4) {
+    //     let prediction0 = predictions.find(p =>
+    //         (p.boundingBox.topLeft[0] + p.boundingBox.bottomRight[0]) / 2 < MIDDLE_X &&
+    //         (p.boundingBox.topLeft[1] + p.boundingBox.bottomRight[1]) / 2 < MIDDLE_Y)
+
+    //     let prediction1 = predictions.find(p =>
+    //         (p.boundingBox.topLeft[0] + p.boundingBox.bottomRight[0]) / 2 > MIDDLE_X &&
+    //         (p.boundingBox.topLeft[1] + p.boundingBox.bottomRight[1]) / 2 < MIDDLE_Y)
+
+    //     let prediction2 = predictions.find(p =>
+    //         (p.boundingBox.topLeft[0] + p.boundingBox.bottomRight[0]) / 2 < MIDDLE_X &&
+    //         (p.boundingBox.topLeft[1] + p.boundingBox.bottomRight[1]) / 2 > MIDDLE_Y)
+
+    //     let prediction3 = predictions.find(p =>
+    //         (p.boundingBox.topLeft[0] + p.boundingBox.bottomRight[0]) / 2 > MIDDLE_X &&
+    //         (p.boundingBox.topLeft[1] + p.boundingBox.bottomRight[1]) / 2 > MIDDLE_Y)
+
+    //     if (prediction0) {
+    //         players[0].present = true
+    //         players[0].update(prediction0)
+    //     } else {
+    //         players[0].present = false
+    //     }
+
+    //     if (prediction1) {
+    //         players[1].present = true
+    //         players[1].update(prediction1)
+    //     } else {
+    //         players[1].present = false
+    //     }
+
+    //     if (prediction2) {
+    //         players[2].present = true
+    //         players[2].update(prediction2)
+    //     } else {
+    //         players[2].present = false
+    //     }
+
+    //     if (prediction3) {
+    //         players[3].present = true
+    //         players[3].update(prediction3)
+    //     } else {
+    //         players[3].present = false
+    //     }
+    // }
 }
 
 
@@ -323,8 +357,10 @@ function drawFaceDebug() {
     stroke('rgba(255,0,0,0.2)')
     noFill()
     strokeWeight(1)
-    line(0, HEIGHT / 2, WIDTH, HEIGHT / 2)
-    line(MIDDLE_X, 0, MIDDLE_X, HEIGHT)
+
+    // Split lines
+    // line(0, HEIGHT / 2, WIDTH, HEIGHT / 2)
+    // line(MIDDLE_X, 0, MIDDLE_X, HEIGHT)
 
     for (const p of predictions) {
         const { topLeft, bottomRight } = p.boundingBox

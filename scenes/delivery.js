@@ -1,70 +1,86 @@
-const DELIVERY_ZONE_THICKNESS = 20
+const DELIVERY_ZONE_THICKNESS = 30
 
 class SceneDelivery {
     deliveryZones = {
-        topLeft: {
-            right: {
-                x: MIDDLE_X - DELIVERY_ZONE_THICKNESS,
-                y: 0,
-                width: DELIVERY_ZONE_THICKNESS,
-                height: MIDDLE_Y,
-            },
-
-            bottom: {
-                x: 0,
-                y: MIDDLE_Y - DELIVERY_ZONE_THICKNESS,
-                width: MIDDLE_X,
-                height: DELIVERY_ZONE_THICKNESS
-            }
-        },
-
-        topRight: {
-            left: {
-                x: MIDDLE_X,
-                y: 0,
-                width: DELIVERY_ZONE_THICKNESS,
-                height: MIDDLE_Y
-            },
-
-            bottom: {
-                x: MIDDLE_X,
-                y: MIDDLE_Y - DELIVERY_ZONE_THICKNESS,
-                width: MIDDLE_X,
-                height: DELIVERY_ZONE_THICKNESS
-            }
-        },
-
-        bottomLeft: {
-            right: {
-                x: 0,
-                y: MIDDLE_Y,
-                width: MIDDLE_X,
-                height: DELIVERY_ZONE_THICKNESS
-            },
-
-            top: {
+        left: {
+            "-": {
                 x: MIDDLE_X - DELIVERY_ZONE_THICKNESS,
                 y: MIDDLE_Y,
-                width: DELIVERY_ZONE_THICKNESS,
-                height: MIDDLE_Y
+                radius: 40
             }
         },
 
-        bottomRight: {
-            left: {
-                x: MIDDLE_X,
+        right: {
+            "-": {
+                x: MIDDLE_X + DELIVERY_ZONE_THICKNESS,
                 y: MIDDLE_Y,
-                width: MIDDLE_X,
-                height: DELIVERY_ZONE_THICKNESS
-            },
-
-            top: {
-                x: MIDDLE_X,
-                y: MIDDLE_Y,
-                width: DELIVERY_ZONE_THICKNESS,
-                height: MIDDLE_Y
+                radius: 40
             }
         }
+
+        // topLeft: {
+        //     // right: {
+        //     //     x: MIDDLE_X - DELIVERY_ZONE_THICKNESS,
+        //     //     y: 0,
+        //     //     width: DELIVERY_ZONE_THICKNESS,
+        //     //     height: MIDDLE_Y,
+        //     // },
+
+        //     bottom: {
+        //         // x: 0,
+        //         // y: MIDDLE_Y - DELIVERY_ZONE_THICKNESS,
+        //         // width: MIDDLE_X,
+        //         // height: DELIVERY_ZONE_THICKNESS
+        //     }
+        // },
+
+        // topRight: {
+        //     // left: {
+        //     //     x: MIDDLE_X,
+        //     //     y: 0,
+        //     //     width: DELIVERY_ZONE_THICKNESS,
+        //     //     height: MIDDLE_Y
+        //     // },
+
+        //     // bottom: {
+        //     //     x: MIDDLE_X,
+        //     //     y: MIDDLE_Y - DELIVERY_ZONE_THICKNESS,
+        //     //     width: MIDDLE_X,
+        //     //     height: DELIVERY_ZONE_THICKNESS
+        //     // }
+        // },
+
+        // bottomLeft: {
+        //     // right: {
+        //     //     x: 0,
+        //     //     y: MIDDLE_Y,
+        //     //     width: MIDDLE_X,
+        //     //     height: DELIVERY_ZONE_THICKNESS
+        //     // },
+
+        //     // top: {
+        //     //     x: MIDDLE_X - DELIVERY_ZONE_THICKNESS,
+        //     //     y: MIDDLE_Y,
+        //     //     width: DELIVERY_ZONE_THICKNESS,
+        //     //     height: MIDDLE_Y
+        //     // }
+        // },
+
+        // bottomRight: {
+        //     // left: {
+        //     //     x: MIDDLE_X,
+        //     //     y: MIDDLE_Y,
+        //     //     width: MIDDLE_X,
+        //     //     height: DELIVERY_ZONE_THICKNESS
+        //     // },
+
+        //     // top: {
+        //     //     x: MIDDLE_X,
+        //     //     y: MIDDLE_Y,
+        //     //     width: DELIVERY_ZONE_THICKNESS,
+        //     //     height: MIDDLE_Y
+        //     // }
+        // }
     }
 
 
@@ -77,7 +93,11 @@ class SceneDelivery {
 
         for (const zones of Object.values(this.deliveryZones)) {
             for (const deliveryZone of Object.values(zones)) {
-                rect(deliveryZone.x, deliveryZone.y, deliveryZone.width, deliveryZone.height)
+                // ellipse(deliveryZone.x, deliveryZone.y, deliveryZone.radius)
+                imageMode(CENTER)
+                image(images.hand, deliveryZone.x, deliveryZone.y, deliveryZone.radius , deliveryZone.radius /2)
+                imageMode(CORNER)
+                // rect(deliveryZone.x, deliveryZone.y, deliveryZone.width, deliveryZone.height)
             }
         }
     }
@@ -88,12 +108,17 @@ class SceneDelivery {
 
         // draw score in the center of the screen
 
-
         for (const player of players) {
             player.draw()
 
-
-            console.log(player.justReleased)
+            imageMode(CENTER)
+            if (player.x < MIDDLE_X) {
+                image(images.cook, player.foreheadX, player.foreheadY, 80, 80)
+            } else {
+                image(images.customer, player.chinX, player.chinY + 10, 80, 80)
+            }
+            imageMode(CORNER)
+            
 
 
             /**
@@ -128,12 +153,9 @@ class SceneDelivery {
             if (player.justReleased) {
                 for (const [quadrantName, quadrant] of Object.entries(this.deliveryZones)) {
                     for (const [zoneName, deliveryZone] of Object.entries(quadrant)) {
-                        if (player.justReleased.x > deliveryZone.x
-                            && player.justReleased.y > deliveryZone.y
-                            && player.justReleased.x < deliveryZone.x + deliveryZone.width
-                            && player.justReleased.y < deliveryZone.y + deliveryZone.height) {
-                            player.justReleased.x = random(WIDTH)
-                            player.justReleased.y = random(HEIGHT)
+                        if (distance(deliveryZone.x, deliveryZone.y, player.x, player.y) < deliveryZone.radius) {
+                            player.justReleased.x = player.x < MIDDLE_X ? random(MIDDLE_X) + MIDDLE_X : random(MIDDLE_X)
+                            player.justReleased.y = random(HEIGHT / 4, MIDDLE_Y + HEIGHT / 4)
                         }
                     }
                 }
@@ -156,7 +178,11 @@ class SceneDelivery {
 
         for (const o of objectsToGrab) {
             fill('red')
-            ellipse(o.x, o.y, o.r)
+            imageMode(CENTER)
+            image(o.image, o.x,o.y, o.r, o.r)
+            imageMode(CORNER)
+
+            // ellipse(o.x, o.y, o.r)
         }
 
         for (const d of dropZones) {
@@ -169,5 +195,6 @@ class SceneDelivery {
             const [x, y, z] = predictions[0].annotations.midwayBetweenEyes[0]
             // image(images.poop, x, y, 40, 40)
         }
+        
     }
 }

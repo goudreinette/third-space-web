@@ -41,28 +41,28 @@ class SceneToilet {
             }
         }
 
+        // if (players[1].present) {
+        //     let buttX = players[1].x - 24
+        //     let buttY = players[1].y - 20
+
+        //     image(images.butt, buttX, buttY, 50, 50)
+
+        //     if (players[1].mouthOpen & frameCount % 5 == 0) {
+        //         this.shits.push({
+        //             x: players[1].x - 10,
+        //             y: players[1].y,
+        //             r: 20
+        //         })
+        //     }
+        // }
+
         if (players[1].present) {
-            let buttX = players[1].x - 24
-            let buttY = players[1].y - 20
-
-            image(images.butt, buttX, buttY, 50, 50)
-
-            if (players[1].mouthOpen & frameCount % 5 == 0) {
-                this.shits.push({
-                    x: players[1].x - 10,
-                    y: players[1].y,
-                    r: 20
-                })
-            }
+            image(images.toilet, players[1].x - 24, players[1].y - 20, 50, 50)
         }
 
-        if (players[2].present) {
-            image(images.toilet, players[2].x - 24, players[2].y - 20, 50, 50)
-        }
-
-        if (players[3].present) {
-            image(images.toilet, players[3].x - 24, players[3].y - 20, 50, 50)
-        }
+        // if (players[3].present) {
+        //     image(images.toilet, players[3].x - 24, players[3].y - 20, 50, 50)
+        // }
 
         drawScore()
         // Bottom
