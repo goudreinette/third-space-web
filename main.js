@@ -38,6 +38,7 @@ function preload() {
  * Do different things depending on the game/scene
  */
 let scene
+let sceneParam = params.get('scene')
 
 if (!params.has('scene')) {
     scene = new SceneStart()
@@ -254,10 +255,22 @@ async function updateFaces() {
     })
 
     if (predictions.length == 2) {
-        // let prediction0 = predictions.find(p => (p.boundingBox.topLeft[1] + p.boundingBox.bottomRight[1]) / 2 < MIDDLE_Y)
-        // let prediction1 = predictions.find(p => (p.boundingBox.topLeft[1] + p.boundingBox.bottomRight[1]) / 2 > MIDDLE_Y)
-        let prediction0 = predictions.find(p => (p.boundingBox.topLeft[0] + p.boundingBox.bottomRight[0]) / 2 < MIDDLE_X)
-        let prediction1 = predictions.find(p => (p.boundingBox.topLeft[0] + p.boundingBox.bottomRight[0]) / 2 > MIDDLE_X)
+        let prediction0
+        let prediction1
+
+        if (sceneParam == "toilet") {
+            prediction0 = predictions.find(p => (p.boundingBox.topLeft[1] + p.boundingBox.bottomRight[1]) / 2 < MIDDLE_Y)
+            prediction1 = predictions.find(p => (p.boundingBox.topLeft[1] + p.boundingBox.bottomRight[1]) / 2 > MIDDLE_Y)
+        }
+
+        if (sceneParam == "delivery") {
+            prediction0 = predictions.find(p => (p.boundingBox.topLeft[0] + p.boundingBox.bottomRight[0]) / 2 < MIDDLE_X)
+            prediction1 = predictions.find(p => (p.boundingBox.topLeft[0] + p.boundingBox.bottomRight[0]) / 2 > MIDDLE_X)
+        }
+        
+        
+        
+        
 
         if (prediction0) {
             players[0].present = true
@@ -342,12 +355,12 @@ function drawCameraPixelated() {
 
 
 function drawScore() {
-    translate(WIDTH, 0);
-    scale(-1, 1);
+    // translate(WIDTH, 0);
+    // scale(-1, 1);
 
     textSize(8)
     fill('red')
-    text(`${score}`, WIDTH - players[1].x, players[1].y)
+    text(`${score}`, players[1].x -5, players[1].y)
 
     resetMatrix()
 }

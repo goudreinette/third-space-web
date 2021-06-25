@@ -11,7 +11,8 @@ class SceneToilet {
 
         // Draw/update all shits
         for (const s of this.shits) {
-            s.y += 1
+            s.vy += .1
+            s.y += s.vy
 
             if (s.y > HEIGHT) {
                 this.shits = this.shits.filter(ss => ss != s)
@@ -36,7 +37,8 @@ class SceneToilet {
                 this.shits.push({
                     x: players[0].x - 10,
                     y: players[0].y,
-                    r: 20
+                    r: 20,
+                    vy: .5
                 })
             }
         }
