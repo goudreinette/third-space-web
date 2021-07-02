@@ -90,14 +90,20 @@ class SceneDelivery {
 
     drawDeliveryZones() {
         stroke('white')
-
+        
+        let i = 0;
         for (const zones of Object.values(this.deliveryZones)) {
             for (const deliveryZone of Object.values(zones)) {
                 // ellipse(deliveryZone.x, deliveryZone.y, deliveryZone.radius)
                 imageMode(CENTER)
-                image(images.hand, deliveryZone.x, deliveryZone.y, deliveryZone.radius , deliveryZone.radius /2)
+                if (i == 0) {
+                    image(images.hand, deliveryZone.x, deliveryZone.y, deliveryZone.radius , deliveryZone.radius * .75)
+                } else {
+                    image(images.handright, deliveryZone.x, deliveryZone.y, deliveryZone.radius , deliveryZone.radius * .75)
+                }
                 imageMode(CORNER)
                 // rect(deliveryZone.x, deliveryZone.y, deliveryZone.width, deliveryZone.height)
+                i++;
             }
         }
     }
@@ -113,7 +119,7 @@ class SceneDelivery {
 
             imageMode(CENTER)
             if (player.x < MIDDLE_X) {
-                image(images.cook, player.foreheadX, player.foreheadY, 80, 80)
+                image(images.cook, player.foreheadX, player.foreheadY, 60, 60)
             } else {
                 image(images.customer, player.chinX, player.chinY + 10, 80, 80)
             }

@@ -20,13 +20,14 @@ let pressStart
 
 function preload() {
     images.butt = loadImage('./img/butt.png')
-    images.cook = loadImage('./img/cook.png')
+    images.cook = loadImage('./img/cookhat2.png')
     images.customer = loadImage('./img/customer.png')
-    images.coin = loadImage('./img/coin.png')
-    images.hand = loadImage('./img/hand.png')
+    images.coin = loadImage('./img/updatecoin.png')
+    images.hand = loadImage('./img/handleft.png')
+    images.handright = loadImage('./img/handright.png')
     images.toilet = loadImage('./img/toliet.png')
     images.poop = loadImage('./img/poop.png')
-    images.pizza = loadImage('./img/pizza.png')
+    images.pizza = loadImage('./img/updatepizza.png')
     pressStart = loadFont('./fonts/prstart.ttf')
 
     cameraGraphics = createGraphics(WIDTH, HEIGHT, WEBGL);
@@ -226,7 +227,7 @@ function setup() {
         {
             x: 30,
             y: 90,
-            r: 30,
+            r: 60,
             image: images.pizza
         }
     ]
